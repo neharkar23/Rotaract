@@ -334,16 +334,13 @@
 .day-bubble.active .day-name {
   color: rgba(255, 255, 255, 0.8);
 }
-.day-bubble.has-event::after {
-  content: '';
-  width: 5px;
-  height: 5px;
-  background-color: var(--accent-color);
-  border-radius: 50%;
-  margin-top: 5px;
+.day-bubble.has-event:not(.active) {
+  background-color: rgba(var(--accent-rgb), 0.15);
+  border-color: rgba(var(--accent-rgb), 0.3);
 }
-.day-bubble.active.has-event::after {
-  background-color: white;
+.day-bubble.has-event:not(.active) .day-number,
+.day-bubble.has-event:not(.active) .day-name {
+  color: var(--accent-color);
 }
 
 /* Apple Slider horizontal carousel -> Converted to Stack Grid */
@@ -1486,4 +1483,11 @@ input:checked + .apple-slider:before {
 
 .calendar-day.today .event-dot {
   background-color: white;
+}
+
+.calendar-day.has-event.warning:not(.today) {
+  background-color: rgba(255, 149, 0, 0.15);
+  border: 1px solid rgba(255, 149, 0, 0.3);
+  color: var(--warning-color);
+  font-weight: 700;
 }

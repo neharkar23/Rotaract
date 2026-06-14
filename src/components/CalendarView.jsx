@@ -120,12 +120,13 @@ const CalendarView = ({ setSelectedEvent }) => {
         return evDate.getDate() === i && evDate.getMonth() === month && evDate.getFullYear() === year;
       });
       
-      const hasItem = dayTasks.length > 0 || dayEvents.length > 0;
+      const hasTask = dayTasks.length > 0;
+      const hasEvent = dayEvents.length > 0;
 
       days.push(
-        <div key={i} className={`calendar-day ${isToday ? 'today' : ''}`} style={{ cursor: 'pointer' }} onClick={() => handleDateClick(year, month, i)}>
+        <div key={i} className={`calendar-day ${isToday ? 'today' : ''} ${hasEvent ? 'has-event warning' : ''}`} style={{ cursor: 'pointer' }} onClick={() => handleDateClick(year, month, i)}>
           <span className="day-number">{i}</span>
-          {hasItem && <div className="event-dot" style={{ backgroundColor: dayEvents.length > 0 ? 'var(--warning-color)' : 'var(--accent-color)' }}></div>}
+          {hasTask && <div className="event-dot"></div>}
         </div>
       );
     }

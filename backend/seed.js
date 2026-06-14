@@ -102,6 +102,50 @@ const seedData = async () => {
     }
   }
 
+  // --- Add dummy data for Pie Charts ---
+  console.log('Seeding analytics data...');
+  const { data: { users } } = await supabase.auth.admin.listUsers();
+  const member = users?.find(u => u.email === 'member@rotaract.org');
+  const admin = users?.find(u => u.email === 'admin@rotaract.org');
+
+  if (member && admin) {
+    // 1. Insert Past Events
+    const pastDate1 = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString();
+    const pastDate2 = new Date(Date.now() - 14 * 24 * 60 * 60 * 1000).toISOString();
+    const pastDate3 = new Date(Date.now() - 21 * 24 * 60 * 60 * 1000).toISOString();
+
+    const { data: events, error: eventErr } = await supabase.from('hr_events').insert([
+      { title: 'Installation Ceremony 2026', start_time: pastDate1, venue: 'Grand Hotel', tag: 'Ceremony', created_by: admin.id },
+      { title: 'Beach Cleanup Drive', start_time: pastDate2, venue: 'Juhu Beach', tag: 'Community Service', created_by: admin.id },
+      { title: 'Resume Building Workshop', start_time: pastDate3, venue: 'College Auditorium', tag: 'Professional Dev', created_by: admin.id }
+    ]).select();
+
+    if (eventErr) console.error('Error inserting events:', eventErr.message);
+    else {
+      // 2. Insert Attendance
+      const attendanceData = events.map(e => ({
+        event_id: e.id,
+        profile_id: member.id,
+        attended_by_admin_id: admin.id
+      }));
+      
+      const { error: attErr } = await supabase.from('hr_attendance').insert(attendanceData);
+      if (attErr) console.error('Error inserting attendance:', attErr.message);
+      else console.log('- Event attendance populated for chart.');
+    }
+
+    // 3. Insert Tasks
+    const { error: taskErr } = await supabase.from('hr_tasks').insert([
+      { title: 'Pay Dues', description: 'Upload UPI screenshot.', assigned_to: member.id, created_by: admin.id, status: 'COMPLETED' },
+      { title: 'Volunteer Registration', description: 'Register for the next drive.', assigned_to: member.id, created_by: admin.id, status: 'PENDING' },
+      { title: 'Submit Report', description: 'Submit the quarterly activity report.', assigned_to: member.id, created_by: admin.id, status: 'COMPLETED' },
+      { title: 'Design Posters', description: 'Design social media posters.', assigned_to: member.id, created_by: admin.id, status: 'IN_PROGRESS' }
+    ]);
+    
+    if (taskErr) console.error('Error inserting tasks:', taskErr.message);
+    else console.log('- Tasks populated for chart.');
+  }
+
   console.log('Seed process finished!');
 };
 

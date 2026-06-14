@@ -9,6 +9,7 @@ const HomeDashboard = ({ setSelectedEvent }) => {
   const { 
     currentProfile, 
     events, 
+    myAttendance,
     tasks, 
     setTasks,
     userNotifications, 
@@ -26,6 +27,16 @@ const HomeDashboard = ({ setSelectedEvent }) => {
   // Filter upcoming events (future startTimes)
   const upcomingEvents = events.filter(e => new Date(e.startTime) >= new Date())
     .sort((a, b) => new Date(a.startTime) - new Date(b.startTime));
+
+  // Calculate Attendance dynamically
+  const pastEvents = events.filter(e => new Date(e.startTime) < new Date());
+  const attendedCount = myAttendance ? myAttendance.length : 0;
+  const totalPastEvents = pastEvents.length;
+  const attendancePercentage = totalPastEvents > 0 ? Math.round((attendedCount / totalPastEvents) * 100) : 0;
+  
+  const ringRadius = 26;
+  const ringCircumference = 2 * Math.PI * ringRadius;
+  const ringOffset = ringCircumference - (attendancePercentage / 100) * ringCircumference;
 
   // Toggle task completion
   const handleToggleTask = async (taskId, currentStatus) => {
@@ -241,15 +252,15 @@ const HomeDashboard = ({ setSelectedEvent }) => {
               <div style={{ position: 'relative', width: '60px', height: '60px' }}>
                 <svg width="60" height="60" viewBox="0 0 60 60">
                   <circle cx="30" cy="30" r="26" fill="none" stroke="var(--border-color)" strokeWidth="6" />
-                  <circle cx="30" cy="30" r="26" fill="none" stroke="var(--accent-color)" strokeWidth="6" strokeDasharray="163" strokeDashoffset="40" strokeLinecap="round" transform="rotate(-90 30 30)" />
+                  <circle cx="30" cy="30" r="26" fill="none" stroke="var(--accent-color)" strokeWidth="6" strokeDasharray={ringCircumference} strokeDashoffset={ringOffset} strokeLinecap="round" transform="rotate(-90 30 30)" />
                 </svg>
                 <div style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '14px', fontWeight: '700' }}>
-                  75%
+                  {attendancePercentage}%
                 </div>
               </div>
               <div>
                 <h4 style={{ fontSize: '14px', fontWeight: '600' }}>Overall Standing</h4>
-                <p style={{ fontSize: '12px', color: 'var(--text-secondary)' }}>You've attended 3 out of 4 recent events. Keep it up!</p>
+                <p style={{ fontSize: '12px', color: 'var(--text-secondary)' }}>You've attended {attendedCount} out of {totalPastEvents} recent events.</p>
               </div>
             </div>
           </div>

@@ -80,6 +80,15 @@ const EventsView = ({ setSelectedEvent }) => {
     }
   };
 
+  const handleOpenCreateForm = () => {
+    // Pre-select current profile and any ADMIN profiles as default coordinators
+    const defaultIds = profiles
+      .filter(p => p.role === 'ADMIN' || p.id === currentProfile?.id)
+      .map(p => p.id);
+    setSelectedCoordinators([...new Set(defaultIds)]);
+    setShowCreateForm(true);
+  };
+
   return (
     <div>
       <div className="events-header">
@@ -89,7 +98,7 @@ const EventsView = ({ setSelectedEvent }) => {
         </div>
         
         {activeRole === 'ADMIN' && (
-          <button className="btn-primary" onClick={() => setShowCreateForm(true)}>
+          <button className="btn-primary" onClick={handleOpenCreateForm}>
             <Plus size={16} />
             <span>Create Event</span>
           </button>
