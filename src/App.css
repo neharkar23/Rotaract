@@ -1235,6 +1235,9 @@ input:checked + .apple-slider:before {
   .mobile-only {
     display: block;
   }
+  .desktop-only {
+    display: none !important;
+  }
 }
 
 @media (max-width: 480px) {

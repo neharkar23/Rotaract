@@ -26,6 +26,7 @@ const TreasurerDashboard = () => {
     if (window.confirm('Approve this membership payment? This will update their dues status to PAID.')) {
       try {
         await paymentService.verifyPayment(paymentId, true);
+        showToast('Payment approved. The member has been notified.');
         triggerUpdate();
       } catch(err) { alert(err.message); }
     }
@@ -41,6 +42,7 @@ const TreasurerDashboard = () => {
       await paymentService.verifyPayment(rejectId, false, remarks);
       setRejectId(null);
       setRemarks('');
+      showToast('Payment rejected. The member has been notified to re-upload.');
       triggerUpdate();
     } catch(err) { alert(err.message); }
   };
@@ -90,14 +92,20 @@ const TreasurerDashboard = () => {
           
           {pendingRequests.length > 0 ? (
             <div className="approval-list" style={{ marginTop: '20px' }}>
-              {pendingRequests.map(req => (
-                <div key={req.payment.id} className="approval-card">
-                  {req.payment.receiptScreenshotUrl ? (
+              {pendingRequests.map(req => {
+                const paymentObj = req.payment || req;
+                const profileObj = req.profile || {};
+                const screenshotUrl = paymentObj.receipt_screenshot_url || paymentObj.receiptScreenshotUrl;
+                const upiRef = paymentObj.upi_transaction_ref || paymentObj.upiTransactionRef;
+                
+                return (
+                <div key={paymentObj.id} className="approval-card">
+                  {screenshotUrl ? (
                     <img 
-                      src={req.payment.receiptScreenshotUrl} 
+                      src={screenshotUrl} 
                       alt="Receipt Screenshot" 
                       className="approval-image"
-                      onClick={() => setSelectedImage(req.payment.receiptScreenshotUrl)}
+                      onClick={() => setSelectedImage(screenshotUrl)}
                       title="Click to zoom screenshot"
                     />
                   ) : (
@@ -108,20 +116,20 @@ const TreasurerDashboard = () => {
 
                   <div className="approval-info">
                     <div>
-                      <h4 style={{ fontSize: '16px', fontWeight: '700' }}>{req.profile?.name}</h4>
+                      <h4 style={{ fontSize: '16px', fontWeight: '700' }}>{profileObj.name || 'Unknown Member'}</h4>
                       <span style={{ fontSize: '11px', color: 'var(--accent-color)', fontWeight: '600', textTransform: 'uppercase' }}>
-                        {req.profile?.rotaractId} • {req.profile?.clubName}
+                        {profileObj.rotaract_id || profileObj.rotaractId} • {profileObj.club_name || profileObj.clubName}
                       </span>
                       
                       <div style={{ background: 'var(--bg-primary)', padding: '12px', borderRadius: '10px', marginTop: '12px', border: '1px solid var(--border-color)' }}>
                         <p style={{ fontSize: '12px', color: 'var(--text-secondary)' }}>UPI Reference ID:</p>
                         <code style={{ fontSize: '13px', fontWeight: '700', wordBreak: 'break-all', display: 'block', marginTop: '2px' }}>
-                          {req.payment.upiTransactionRef}
+                          {upiRef || 'N/A'}
                         </code>
                       </div>
                     </div>
 
-                    {rejectId === req.payment.id ? (
+                    {rejectId === paymentObj.id ? (
                       <form onSubmit={handleRejectSubmit} style={{ marginTop: '12px' }}>
                         <div className="form-group">
                           <label>REJECTION REASON</label>
@@ -144,10 +152,10 @@ const TreasurerDashboard = () => {
                         </div>
                       </form>
                     ) : (
-                      <div className="approval-actions">
+                      <div className="approval-actions" style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
                         <button 
                           className="btn-primary" 
-                          onClick={() => handleApprove(req.payment.id)}
+                          onClick={() => handleApprove(paymentObj.id)}
                           style={{ display: 'flex', alignItems: 'center', gap: '6px', padding: '10px 16px', fontSize: '13px' }}
                         >
                           <Check size={16} />
@@ -156,7 +164,7 @@ const TreasurerDashboard = () => {
                         
                         <button 
                           className="btn-secondary" 
-                          onClick={() => setRejectId(req.payment.id)}
+                          onClick={() => setRejectId(paymentObj.id)}
                           style={{ display: 'flex', alignItems: 'center', gap: '6px', border: '1px solid var(--error-color)', color: 'var(--error-color)', padding: '10px 16px', fontSize: '13px' }}
                         >
                           <X size={16} />
@@ -166,7 +174,8 @@ const TreasurerDashboard = () => {
                     )}
                   </div>
                 </div>
-              ))}
+                );
+              })}
             </div>
           ) : (
             <p style={{ color: 'var(--text-secondary)', textAlign: 'center', padding: '40px 0', fontSize: '14px' }}>
@@ -195,7 +204,10 @@ const TreasurerDashboard = () => {
               <tbody>
                 {profiles.map(p => {
                   // Find matching dues record
-                  const dueRecord = payments.find(pay => pay.profileId === p.id) || {
+                  const dueRecord = payments.find(pay => {
+                    const paymentObj = pay.payment || pay;
+                    return paymentObj.profile_id === p.id || paymentObj.profileId === p.id;
+                  }) || {
                     amountDue: 1500,
                     status: 'UNPAID'
                   };

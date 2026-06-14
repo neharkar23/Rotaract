@@ -1,17 +1,20 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useApp } from '../context/AppContext';
-import { Calendar, Clock, MapPin, Share2, BookOpen, Video, FileText, Upload, Download, ArrowLeft, X } from 'lucide-react';
+import { Calendar, Clock, MapPin, Share2, BookOpen, Video, FileText, Upload, Download, ArrowLeft, X, CheckCircle } from 'lucide-react';
 import InitialsAvatar from './InitialsAvatar';
 import ReportGenerator from './ReportGenerator';
 import { eventService } from '../data/mockDb';
 
 const EventDetailModal = ({ event, onClose }) => {
-  const { profiles } = useApp();
+  const { profiles, currentProfile, activeRole, myAttendance } = useApp();
   
   const [showReportBuilder, setShowReportBuilder] = useState(false);
+  const [showAttendanceProof, setShowAttendanceProof] = useState(false);
   const [images, setImages] = useState([]);
+  const [attendanceImage, setAttendanceImage] = useState(null);
   const [attendanceCount, setAttendanceCount] = useState(0);
   const [isGenerating, setIsGenerating] = useState(false);
+  const [isSubmittingProof, setIsSubmittingProof] = useState(false);
   const reportRef = useRef();
   
   if (!event) return null;
@@ -83,6 +86,33 @@ const EventDetailModal = ({ event, onClose }) => {
       setIsGenerating(false);
     }
   };
+
+  const handleAttendanceProofUpload = (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onload = (event) => setAttendanceImage(event.target.result);
+      reader.readAsDataURL(file);
+    }
+  };
+
+  const submitAttendanceProof = async () => {
+    if (!attendanceImage) return alert('Please upload an image for proof.');
+    setIsSubmittingProof(true);
+    try {
+      await eventService.applyForAttendance(event.id, currentProfile.id, attendanceImage);
+      alert('Attendance proof submitted! Waiting for admin verification.');
+      setShowAttendanceProof(false);
+      setAttendanceImage(null);
+    } catch (err) {
+      alert(err.response?.data?.error || err.message || 'Failed to submit proof.');
+    } finally {
+      setIsSubmittingProof(false);
+    }
+  };
+
+  const hasAttended = myAttendance.some(a => a.event_id === event.id || a.eventId === event.id);
+  const canApplyAttendance = !hasAttended && activeRole === 'MEMBER';
 
   return (
     <div className="modal-overlay" onClick={onClose}>
@@ -214,14 +244,61 @@ const EventDetailModal = ({ event, onClose }) => {
             <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', marginTop: '20px' }}>
               
               {/* Report Generation Full CTA */}
-              <button 
-                className="btn-primary" 
-                onClick={() => setShowReportBuilder(true)}
-                style={{ width: '100%', padding: '12px', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', fontSize: '14px', borderRadius: '12px' }}
-              >
-                <FileText size={16} />
-                <span>Generate Event Report</span>
-              </button>
+              {(activeRole === 'ADMIN' || activeRole === 'TREASURER' || organizers.some(o => o.id === currentProfile?.id)) && (
+                <button 
+                  className="btn-primary" 
+                  onClick={() => setShowReportBuilder(true)}
+                  style={{ width: '100%', padding: '12px', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', fontSize: '14px', borderRadius: '12px' }}
+                >
+                  <FileText size={16} />
+                  <span>Generate Event Report</span>
+                </button>
+              )}
+
+              {/* Apply For Attendance */}
+              {canApplyAttendance && (
+                showAttendanceProof ? (
+                  <div style={{ background: 'var(--bg-secondary)', padding: '16px', borderRadius: '12px', border: '1px solid var(--border-color)', marginTop: '8px' }}>
+                    <h4 style={{ fontSize: '14px', fontWeight: '600', marginBottom: '12px' }}>Submit Attendance Proof</h4>
+                    
+                    {!attendanceImage ? (
+                      <label style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', padding: '16px', border: '2px dashed var(--border-color)', borderRadius: '8px', cursor: 'pointer', background: 'var(--bg-primary)' }}>
+                        <Upload size={20} style={{ color: 'var(--text-secondary)', marginBottom: '8px' }} />
+                        <span style={{ fontSize: '12px', color: 'var(--text-primary)' }}>Upload Photo Evidence</span>
+                        <input type="file" accept="image/*" style={{ display: 'none' }} onChange={handleAttendanceProofUpload} />
+                      </label>
+                    ) : (
+                      <div style={{ position: 'relative', width: '100%', height: '120px', borderRadius: '8px', overflow: 'hidden', marginBottom: '12px' }}>
+                        <img src={attendanceImage} alt="proof" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                        <button 
+                          onClick={() => setAttendanceImage(null)}
+                          style={{ position: 'absolute', top: '4px', right: '4px', background: 'rgba(0,0,0,0.6)', color: 'white', border: 'none', borderRadius: '50%', width: '24px', height: '24px', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}
+                        >
+                          <X size={14} />
+                        </button>
+                      </div>
+                    )}
+
+                    <div style={{ display: 'flex', gap: '8px', marginTop: '12px' }}>
+                      <button className="btn-primary" style={{ flex: 1, padding: '8px', fontSize: '12px' }} onClick={submitAttendanceProof} disabled={isSubmittingProof || !attendanceImage}>
+                        {isSubmittingProof ? 'Submitting...' : 'Submit Proof'}
+                      </button>
+                      <button className="btn-secondary" style={{ padding: '8px', fontSize: '12px' }} onClick={() => { setShowAttendanceProof(false); setAttendanceImage(null); }}>
+                        Cancel
+                      </button>
+                    </div>
+                  </div>
+                ) : (
+                  <button 
+                    className="btn-primary" 
+                    onClick={() => setShowAttendanceProof(true)}
+                    style={{ width: '100%', padding: '12px', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', fontSize: '14px', borderRadius: '12px', background: 'var(--accent-color)', color: 'white' }}
+                  >
+                    <CheckCircle size={16} />
+                    <span>Apply for Attendance</span>
+                  </button>
+                )
+              )}
 
               {/* Sibling secondary row */}
               <div style={{ display: 'flex', gap: '10px', width: '100%' }}>

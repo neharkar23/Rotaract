@@ -14,4 +14,9 @@ router.get('/:eventId/attendance', requireAuth, eventController.getEventAttendan
 router.post('/:eventId/attendance', requireAuth, requireRole(['ADMIN']), eventController.markAttendance);
 router.delete('/:eventId/attendance/:profileId', requireAuth, requireRole(['ADMIN']), eventController.removeAttendance);
 
+// Attendance Verification endpoints
+router.post('/:eventId/attendance/apply', requireAuth, eventController.applyForAttendance);
+router.get('/attendance/pending', requireAuth, requireRole(['ADMIN', 'TREASURER']), eventController.getPendingAttendanceRequests);
+router.post('/attendance/verify/:requestId', requireAuth, requireRole(['ADMIN', 'TREASURER']), eventController.verifyAttendanceRequest);
+
 export default router;

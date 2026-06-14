@@ -10,7 +10,7 @@ const Onboarding = () => {
   
   // Login input states
   const [loginId, setLoginId] = useState('member@rotaract.org');
-  const [loginPassword, setLoginPassword] = useState('member123');
+  const [loginPassword, setLoginPassword] = useState('password123');
   const [loginError, setLoginError] = useState('');
   
   // Registration data states

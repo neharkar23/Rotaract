@@ -5,7 +5,7 @@ import { ShieldAlert, UserCheck, CalendarCheck, Check, X, Send, ClipboardList, B
 import InitialsAvatar from './InitialsAvatar';
 
 const AdminDashboard = () => {
-  const { currentProfile, profiles, events, attendance, tasks, triggerUpdate, getPendingApprovals, approveUser } = useApp();
+  const { currentProfile, profiles, events, attendance, pendingAttendance, tasks, triggerUpdate, getPendingApprovals, approveUser } = useApp();
   
   const [pendingUsers, setPendingUsers] = useState([]);
   
@@ -121,7 +121,7 @@ const AdminDashboard = () => {
       </div>
 
       {/* Admin Tab selection */}
-      <div className="tab-bar-container" style={{ maxWidth: '400px', marginBottom: '24px' }}>
+      <div className="tab-bar-container" style={{ maxWidth: '500px', marginBottom: '24px' }}>
         <div 
           className={`tab-bar-item ${adminSection === 'attendance' ? 'active' : ''}`}
           onClick={() => setAdminSection('attendance')}
@@ -141,10 +141,20 @@ const AdminDashboard = () => {
           onClick={() => setAdminSection('approvals')}
         >
           <ShieldAlert size={16} />
-          <span>Pending{pendingUsers.length > 0 && ` (${pendingUsers.length})`}</span>
+          {pendingUsers.length > 0 && <span className="badge" style={{ position: 'absolute', top: '-5px', right: '-5px', width: '8px', height: '8px', padding: 0 }} />}
+          <span>Approvals</span>
+        </div>
+        <div 
+          className={`tab-bar-item ${adminSection === 'verifications' ? 'active' : ''}`}
+          onClick={() => setAdminSection('verifications')}
+        >
+          <UserCheck size={16} />
+          {pendingAttendance.length > 0 && <span className="badge" style={{ position: 'absolute', top: '-5px', right: '-5px', width: '8px', height: '8px', padding: 0 }} />}
+          <span>Proofs</span>
         </div>
       </div>
 
+      {/* Toast Notification */}
       {/* SECTION 2: Attendance Sheets */}
       {adminSection === 'attendance' && (
         <div className="dashboard-card">
@@ -206,6 +216,72 @@ const AdminDashboard = () => {
             <p style={{ color: 'var(--text-secondary)', textAlign: 'center', padding: '24px' }}>
               Create an event first to log member participation.
             </p>
+          )}
+        </div>
+      )}
+
+      {/* SECTION 2B: Attendance Verifications */}
+      {adminSection === 'verifications' && (
+        <div className="dashboard-card">
+          <h3>Pending Attendance Proofs</h3>
+          <p style={{ color: 'var(--text-secondary)', fontSize: '14px', marginBottom: '16px' }}>Review and verify member attendance photo uploads.</p>
+          
+          {pendingAttendance.length === 0 ? (
+            <p style={{ color: 'var(--text-secondary)', textAlign: 'center', padding: '24px' }}>
+              No pending attendance proofs to verify.
+            </p>
+          ) : (
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: '16px' }}>
+              {pendingAttendance.map(req => {
+                const member = profiles.find(p => p.id === req.profileId);
+                const ev = events.find(e => e.id === req.eventId);
+                
+                return (
+                  <div key={req.id} className="liquid-glass-card" style={{ padding: '16px', display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                      <InitialsAvatar name={member?.name || 'Unknown'} size={32} />
+                      <div>
+                        <div style={{ fontWeight: '600', fontSize: '14px' }}>{member?.name || 'Unknown Member'}</div>
+                        <div style={{ fontSize: '12px', color: 'var(--text-secondary)' }}>Event: {ev?.title || 'Unknown Event'}</div>
+                      </div>
+                    </div>
+                    
+                    <div style={{ width: '100%', height: '140px', borderRadius: '8px', overflow: 'hidden', background: '#000' }}>
+                      <img src={req.proofImage} alt="proof" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                    </div>
+                    
+                    <div style={{ display: 'flex', gap: '8px', marginTop: 'auto' }}>
+                      <button 
+                        className="btn-primary" 
+                        style={{ flex: 1, padding: '8px', fontSize: '12px', background: '#34c759', color: 'white' }}
+                        onClick={async () => {
+                          try {
+                            await eventService.verifyAttendanceRequest(req.id, true);
+                            triggerUpdate();
+                            showToast('Attendance approved.');
+                          } catch (err) { alert(err.message); }
+                        }}
+                      >
+                        <Check size={14} /> Approve
+                      </button>
+                      <button 
+                        className="btn-secondary" 
+                        style={{ flex: 1, padding: '8px', fontSize: '12px', color: '#ff3b30' }}
+                        onClick={async () => {
+                          try {
+                            await eventService.verifyAttendanceRequest(req.id, false);
+                            triggerUpdate();
+                            showToast('Attendance rejected.');
+                          } catch (err) { alert(err.message); }
+                        }}
+                      >
+                        <X size={14} /> Reject
+                      </button>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
           )}
         </div>
       )}

@@ -9,6 +9,8 @@ const ProfileView = () => {
     currentUser,
     currentProfile, 
     payments, 
+    myAttendance,
+    events,
     triggerUpdate, 
     accentColor, 
     changeAccent, 
@@ -290,6 +292,33 @@ const ProfileView = () => {
                 <h4 style={{ fontSize: '14px', fontWeight: '600' }}>Events Attended</h4>
                 <p style={{ fontSize: '12px', color: 'var(--text-secondary)' }}>You've attended 3 out of 4 recent events. Keep it up!</p>
               </div>
+            </div>
+          </div>
+
+          <div className="dashboard-card">
+            <h3>Attendance History</h3>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', marginTop: '16px' }}>
+              {myAttendance && myAttendance.length > 0 ? (
+                myAttendance.map(att => {
+                  const ev = events.find(e => e.id === (att.eventId || att.event_id));
+                  return (
+                    <div key={att.id} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '12px', borderRadius: '12px', background: 'var(--bg-secondary)', border: '1px solid var(--border-color)' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                        <div style={{ width: '36px', height: '36px', borderRadius: '8px', background: 'rgba(52, 199, 89, 0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--success-color)' }}>
+                          <CheckCircle2 size={16} />
+                        </div>
+                        <div>
+                          <div style={{ fontSize: '13px', fontWeight: '600', color: 'var(--text-primary)' }}>{ev ? ev.title : 'Unknown Event'}</div>
+                          <div style={{ fontSize: '11px', color: 'var(--text-secondary)' }}>{ev ? new Date(ev.startTime).toLocaleDateString() : 'Unknown Date'}</div>
+                        </div>
+                      </div>
+                      <span style={{ fontSize: '11px', padding: '4px 8px', borderRadius: '99px', background: 'var(--success-color)', color: 'white', fontWeight: '600' }}>Verified</span>
+                    </div>
+                  );
+                })
+              ) : (
+                <p style={{ fontSize: '13px', color: 'var(--text-secondary)', textAlign: 'center', padding: '16px 0' }}>No attendance records found.</p>
+              )}
             </div>
           </div>
           

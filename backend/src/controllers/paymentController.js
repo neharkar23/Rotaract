@@ -66,7 +66,7 @@ export const getPendingPayments = async (req, res, next) => {
   try {
     const { data: payments, error } = await supabase
       .from('hr_payments')
-      .select('*, hr_profiles(name, rotaract_id, email, avatar_url)')
+      .select('*, hr_profiles!profile_id(name, rotaract_id, email, avatar_url)')
       .eq('status', 'PENDING_VERIFICATION')
       .order('created_at', { ascending: true });
 

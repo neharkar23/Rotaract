@@ -81,6 +81,35 @@ const HomeDashboard = ({ setSelectedEvent }) => {
   // Unread notifications count
   const unreadCount = userNotifications.filter(n => !n.read).length;
 
+  const renderTasksCard = (className = '') => (
+    <div className={`dashboard-card ${className}`}>
+      <h3>My Tasks ({pendingTasks.length})</h3>
+      <div className="tasks-list">
+        {memberTasks.length > 0 ? (
+          memberTasks.slice(0, 4).map(task => (
+            <div key={task.id} className="task-item">
+              <div 
+                className={`task-checkbox ${task.status === 'COMPLETED' ? 'completed' : ''}`}
+                onClick={() => handleToggleTask(task.id, task.status)}
+              >
+                {task.status === 'COMPLETED' && <Check size={12} />}
+              </div>
+              
+              <div className="task-details">
+                <h5 className={task.status === 'COMPLETED' ? 'completed' : ''}>{task.title}</h5>
+                <p>{task.description.substring(0, 40)}...</p>
+              </div>
+            </div>
+          ))
+        ) : (
+          <p style={{ fontSize: '13px', color: 'var(--text-secondary)', textAlign: 'center', padding: '12px' }}>
+            No tasks assigned.
+          </p>
+        )}
+      </div>
+    </div>
+  );
+
   return (
     <div>
       {/* Dashboard Header Banner */}
@@ -153,6 +182,9 @@ const HomeDashboard = ({ setSelectedEvent }) => {
             </div>
           </div>
 
+          {/* Tasks checklist card for Mobile ONLY (Appears right after calendar, before upcoming events) */}
+          {renderTasksCard('mobile-only')}
+
           {/* Upcoming Events Carousel */}
           <div className="dashboard-card">
             <h3 style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
@@ -223,32 +255,7 @@ const HomeDashboard = ({ setSelectedEvent }) => {
           </div>
 
           {/* Tasks checklist card */}
-          <div className="dashboard-card">
-            <h3>My Tasks ({pendingTasks.length})</h3>
-            <div className="tasks-list">
-              {memberTasks.length > 0 ? (
-                memberTasks.slice(0, 4).map(task => (
-                  <div key={task.id} className="task-item">
-                    <div 
-                      className={`task-checkbox ${task.status === 'COMPLETED' ? 'completed' : ''}`}
-                      onClick={() => handleToggleTask(task.id, task.status)}
-                    >
-                      {task.status === 'COMPLETED' && <Check size={12} />}
-                    </div>
-                    
-                    <div className="task-details">
-                      <h5 className={task.status === 'COMPLETED' ? 'completed' : ''}>{task.title}</h5>
-                      <p>{task.description.substring(0, 40)}...</p>
-                    </div>
-                  </div>
-                ))
-              ) : (
-                <p style={{ fontSize: '13px', color: 'var(--text-secondary)', textAlign: 'center', padding: '12px' }}>
-                  No tasks assigned.
-                </p>
-              )}
-            </div>
-          </div>
+          {renderTasksCard('desktop-only')}
 
         </div>
       </div>

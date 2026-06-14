@@ -5,15 +5,15 @@ import { BarChart as BarChartIcon, CheckSquare, BellRing, Plus, Check, Trash2, C
 import { PieChart, Pie, Cell, Tooltip, ResponsiveContainer } from 'recharts';
 
 const AnalyticsView = () => {
-  const { 
-    currentProfile, 
+  const {
+    currentProfile,
     events,
     myAttendance,
     attendance: allAttendance,
-    tasks, 
+    tasks,
     setTasks,
-    notices, 
-    activeRole, 
+    notices,
+    activeRole,
     triggerUpdate,
     profiles,
     deleteTask
@@ -38,10 +38,10 @@ const AnalyticsView = () => {
   // Calculate analytics
   const getChatsAnalytics = (mode) => {
     const pastEvents = (events || []).filter(e => new Date(e.startTime || e.start_time) < new Date());
-    
+
     let targetAttendance = myAttendance || [];
     let totalPossibleAttendance = pastEvents.length;
-    
+
     if (mode === 'club' && activeRole === 'ADMIN') {
       targetAttendance = allAttendance || [];
       totalPossibleAttendance = pastEvents.length * (profiles?.length || 1);
@@ -56,9 +56,9 @@ const AnalyticsView = () => {
         insights: ['No past events available for analytics yet.']
       };
     }
-    
+
     const eventRingPercentage = totalPossibleAttendance > 0 ? Math.round((targetAttendance.length / totalPossibleAttendance) * 100) : 0;
-    
+
     const distribution = { Ceremony: 0, 'Community Service': 0, 'Professional Dev': 0 };
     targetAttendance.forEach(att => {
       const ev = pastEvents.find(e => e.id === (att.eventId || att.event_id));
@@ -76,15 +76,15 @@ const AnalyticsView = () => {
       distribution,
       insights: mode === 'club'
         ? [
-            `The club has maintained ${eventRingPercentage}% overall attendance at past actions.`,
-            eventRingPercentage > 60 ? 'Great club engagement overall!' : 'Focus on member retention and outreach.',
-            `Most active club sector: ${activeSector}.`
-          ]
+          `The club has maintained ${eventRingPercentage}% overall attendance at past actions.`,
+          eventRingPercentage > 60 ? 'Great club engagement overall!' : 'Focus on member retention and outreach.',
+          `Most active club sector: ${activeSector}.`
+        ]
         : [
-            `You have logged ${eventRingPercentage}% attendance at past club actions.`,
-            eventRingPercentage > 60 ? 'Stunning commitment to the community!' : 'Participate in upcoming cleanups to raise your metrics.',
-            `Most active sector of involvement: ${activeSector}.`
-          ]
+          `You have logged ${eventRingPercentage}% attendance at past club actions.`,
+          eventRingPercentage > 60 ? 'Stunning commitment to the community!' : 'Participate in upcoming cleanups to raise your metrics.',
+          `Most active sector of involvement: ${activeSector}.`
+        ]
     };
   };
 
@@ -94,8 +94,8 @@ const AnalyticsView = () => {
   // Pie Chart Data Processors
   const eventPieData = [
     { name: 'Ceremony', value: analytics.distribution.Ceremony, color: '#d91c5c' },
-    { name: 'Community', value: analytics.distribution['Community Service'], color: '#34c759' },
-    { name: 'Professional', value: analytics.distribution['Professional Dev'], color: '#007aff' }
+    { name: 'Community', value: analytics.distribution['Community Service'], color: '#ff4d85' },
+    { name: 'Professional', value: analytics.distribution['Professional Dev'], color: '#a60a3d' }
   ].filter(d => d.value > 0);
 
   const getTasksAnalytics = () => {
@@ -106,8 +106,8 @@ const AnalyticsView = () => {
     const completed = targetTasks.filter(t => t.status === 'COMPLETED').length;
     const pending = targetTasks.length - completed;
     return [
-      { name: 'Completed', value: completed, color: '#34c759' },
-      { name: 'Pending', value: pending, color: '#ff9500' }
+      { name: 'Completed', value: completed, color: '#d91c5c' },
+      { name: 'Pending', value: pending, color: '#ffb3c6' }
     ].filter(d => d.value > 0);
   };
   const taskPieData = getTasksAnalytics();
@@ -117,21 +117,21 @@ const AnalyticsView = () => {
   const selfTasks = allMyTasks.filter(t => t.createdBy === currentProfile.id);
   const assignedTasks = allMyTasks.filter(t => t.createdBy !== currentProfile.id);
 
-  const displayedTasks = taskFilter === 'all' 
-    ? allMyTasks 
-    : taskFilter === 'assigned' 
-    ? assignedTasks 
-    : selfTasks;
+  const displayedTasks = taskFilter === 'all'
+    ? allMyTasks
+    : taskFilter === 'assigned'
+      ? assignedTasks
+      : selfTasks;
 
   const handleToggleTask = async (taskId, currentStatus) => {
     const nextStatus = currentStatus === 'COMPLETED' ? 'IN_PROGRESS' : 'COMPLETED';
-    
+
     // Optimistic update
     setTasks(prevTasks => prevTasks.map(t => t.id === taskId ? { ...t, status: nextStatus } : t));
 
     try {
       await taskService.updateTaskStatus(taskId, nextStatus);
-    } catch(err) {
+    } catch (err) {
       // Revert on error
       setTasks(prevTasks => prevTasks.map(t => t.id === taskId ? { ...t, status: currentStatus } : t));
       alert(err.message);
@@ -146,7 +146,7 @@ const AnalyticsView = () => {
       title: taskTitle,
       description: taskDesc || 'No details provided.',
       assignedTo: currentProfile.id,
-      endDate: taskEnd ? new Date(taskEnd).toISOString() : new Date(Date.now() + 3*24*60*60*1000).toISOString()
+      endDate: taskEnd ? new Date(taskEnd).toISOString() : new Date(Date.now() + 3 * 24 * 60 * 60 * 1000).toISOString()
     }, currentProfile.id);
 
     setTaskTitle('');
@@ -178,9 +178,9 @@ const AnalyticsView = () => {
       title: `Notice Follow-up: ${notice.title}`,
       description: `Action items from notice: ${notice.content}`,
       assignedTo: currentProfile.id,
-      endDate: new Date(Date.now() + 2*24*60*60*1000).toISOString()
+      endDate: new Date(Date.now() + 2 * 24 * 60 * 60 * 1000).toISOString()
     }, currentProfile.id);
-    
+
     alert('Notice added to your task list!');
     triggerUpdate();
   };
@@ -218,21 +218,21 @@ const AnalyticsView = () => {
     <div>
       {/* Top tab switcher */}
       <div className="tab-bar-container">
-        <div 
+        <div
           className={`tab-bar-item ${activeSubTab === 'analytics' ? 'active' : ''}`}
           onClick={() => setActiveSubTab('analytics')}
         >
           <BarChartIcon size={16} />
           <span>Analytics</span>
         </div>
-        <div 
+        <div
           className={`tab-bar-item ${activeSubTab === 'tasks' ? 'active' : ''}`}
           onClick={() => setActiveSubTab('tasks')}
         >
           <CheckSquare size={16} />
           <span>My Tasks</span>
         </div>
-        <div 
+        <div
           className={`tab-bar-item ${activeSubTab === 'notices' ? 'active' : ''}`}
           onClick={() => setActiveSubTab('notices')}
         >
@@ -244,7 +244,7 @@ const AnalyticsView = () => {
       {/* SUB-VIEW 1: Analytics Dashboard */}
       {activeSubTab === 'analytics' && (
         <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
-          
+
           {/* Admin Toggle */}
           {activeRole === 'ADMIN' && (
             <div className="tab-bar-container" style={{ display: 'inline-flex', marginBottom: '8px' }}>
@@ -257,51 +257,51 @@ const AnalyticsView = () => {
             {currentMode === 'personal' && (
               <div className="dashboard-card analytics-card">
                 <h3>My Attendance</h3>
-              
-              <div className="progress-ring-container">
-                <svg height={radius * 2} width={radius * 2}>
-                  <circle
-                    stroke="var(--border-color)"
-                    fill="transparent"
-                    strokeWidth={stroke}
-                    r={normalizedRadius}
-                    cx={radius}
-                    cy={radius}
-                  />
-                  <circle
-                    stroke="var(--accent-color)"
-                    fill="transparent"
-                    strokeWidth={stroke}
-                    strokeDasharray={circumference + ' ' + circumference}
-                    style={{ strokeDashoffset }}
-                    strokeLinecap="round"
-                    className="progress-ring-circle"
-                    r={normalizedRadius}
-                    cx={radius}
-                    cy={radius}
-                  />
-                </svg>
-                <div className="progress-ring-label">
-                  <span className="progress-ring-percentage">{analytics.eventRingPercentage}%</span>
-                  <span className="progress-ring-text">ATTENDED</span>
-                </div>
-              </div>
 
-              <div className="analytics-stats-grid">
-                <div className="stat-box">
-                  <div className="number">{analytics.attendedCount}</div>
-                  <div className="label">ATTENDED</div>
+                <div className="progress-ring-container">
+                  <svg height={radius * 2} width={radius * 2}>
+                    <circle
+                      stroke="var(--border-color)"
+                      fill="transparent"
+                      strokeWidth={stroke}
+                      r={normalizedRadius}
+                      cx={radius}
+                      cy={radius}
+                    />
+                    <circle
+                      stroke="var(--accent-color)"
+                      fill="transparent"
+                      strokeWidth={stroke}
+                      strokeDasharray={circumference + ' ' + circumference}
+                      style={{ strokeDashoffset }}
+                      strokeLinecap="round"
+                      className="progress-ring-circle"
+                      r={normalizedRadius}
+                      cx={radius}
+                      cy={radius}
+                    />
+                  </svg>
+                  <div className="progress-ring-label">
+                    <span className="progress-ring-percentage">{analytics.eventRingPercentage}%</span>
+                    <span className="progress-ring-text">ATTENDED</span>
+                  </div>
                 </div>
-                <div className="stat-box">
-                  <div className="number">{analytics.totalPastEvents}</div>
-                  <div className="label">TOTAL EVENTS</div>
-                </div>
-                <div className="stat-box">
-                  <div className="number">{Math.round(analytics.attendedCount * 1.5)}</div>
-                  <div className="label">HOURS LOGGED</div>
+
+                <div className="analytics-stats-grid">
+                  <div className="stat-box">
+                    <div className="number">{analytics.attendedCount}</div>
+                    <div className="label">ATTENDED</div>
+                  </div>
+                  <div className="stat-box">
+                    <div className="number">{analytics.totalPastEvents}</div>
+                    <div className="label">TOTAL EVENTS</div>
+                  </div>
+                  <div className="stat-box">
+                    <div className="number">{Math.round(analytics.attendedCount * 1.5)}</div>
+                    <div className="label">HOURS LOGGED</div>
+                  </div>
                 </div>
               </div>
-            </div>
             )}
 
             <div className="dashboard-card" style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
@@ -331,7 +331,7 @@ const AnalyticsView = () => {
                     <div style={{ height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--text-secondary)', fontSize: '13px' }}>No events logged yet</div>
                   )}
                 </div>
-                
+
                 {eventPieData.length > 0 && (
                   <div style={{ display: 'flex', justifyContent: 'center', gap: '16px', flexWrap: 'wrap', marginTop: '8px' }}>
                     {eventPieData.map(d => (
@@ -370,7 +370,7 @@ const AnalyticsView = () => {
                     <div style={{ height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--text-secondary)', fontSize: '13px' }}>No tasks assigned yet</div>
                   )}
                 </div>
-                
+
                 {taskPieData.length > 0 && (
                   <div style={{ display: 'flex', justifyContent: 'center', gap: '16px', flexWrap: 'wrap', marginTop: '8px' }}>
                     {taskPieData.map(d => (
@@ -399,7 +399,7 @@ const AnalyticsView = () => {
       {/* SUB-VIEW 2: Tasks Section (With completion and deletions) */}
       {activeSubTab === 'tasks' && (
         <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
-          
+
           <div className="events-header">
             <div>
               <h3>Task Management</h3>
@@ -425,13 +425,13 @@ const AnalyticsView = () => {
                   const canDelete = isSelf || activeRole === 'ADMIN';
                   return (
                     <div key={task.id} className="task-item" style={{ borderLeft: `4px solid ${isSelf ? 'var(--accent-color)' : 'var(--warning-color)'}` }}>
-                      <div 
+                      <div
                         className={`task-checkbox ${task.status === 'COMPLETED' ? 'completed' : ''}`}
                         onClick={() => handleToggleTask(task.id, task.status)}
                       >
                         {task.status === 'COMPLETED' && <Check size={12} />}
                       </div>
-                      
+
                       <div className="task-details">
                         <h5 className={task.status === 'COMPLETED' ? 'completed' : ''}>{task.title}</h5>
                         <p>{task.description}</p>
@@ -446,7 +446,7 @@ const AnalyticsView = () => {
                       </div>
 
                       {canDelete && (
-                        <button 
+                        <button
                           onClick={() => handleDeleteTask(task.id)}
                           className="btn-secondary"
                           style={{ border: 'none', padding: '6px', color: 'var(--error-color)', cursor: 'pointer', alignSelf: 'center', background: 'transparent' }}
@@ -472,24 +472,24 @@ const AnalyticsView = () => {
               <div className="modal-content liquid-glass-card slide-up">
                 <div className="modal-close-btn" onClick={() => setShowSelfTaskForm(false)}>✕</div>
                 <h3 style={{ fontSize: '20px', fontWeight: '800', marginBottom: '20px' }}>Log Self Task</h3>
-                
+
                 <form onSubmit={handleCreateSelfTask} className="onboarding-form">
                   <div className="form-group">
                     <label>TASK NAME *</label>
-                    <input 
-                      type="text" 
-                      className="form-input" 
-                      placeholder="Prepare budget report" 
+                    <input
+                      type="text"
+                      className="form-input"
+                      placeholder="Prepare budget report"
                       value={taskTitle}
                       onChange={(e) => setTaskTitle(e.target.value)}
-                      required 
+                      required
                     />
                   </div>
-                  
+
                   <div className="form-group">
                     <label>DESCRIPTION</label>
-                    <textarea 
-                      className="form-input" 
+                    <textarea
+                      className="form-input"
                       style={{ minHeight: '60px' }}
                       placeholder="Details of the work..."
                       value={taskDesc}
@@ -499,9 +499,9 @@ const AnalyticsView = () => {
 
                   <div className="form-group">
                     <label>DUE DATE</label>
-                    <input 
-                      type="date" 
-                      className="form-input" 
+                    <input
+                      type="date"
+                      className="form-input"
                       value={taskEnd}
                       onChange={(e) => setTaskEnd(e.target.value)}
                     />
@@ -520,13 +520,13 @@ const AnalyticsView = () => {
       {/* SUB-VIEW 3: Noticeboard (Announcements list) */}
       {activeSubTab === 'notices' && (
         <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
-          
+
           <div className="events-header">
             <div>
               <h3>Announcements Board</h3>
               <p style={{ color: 'var(--text-secondary)', fontSize: '13px' }}>Official notifications from administrative directors</p>
             </div>
-            
+
             {activeRole === 'ADMIN' && (
               <button className="btn-primary" onClick={() => setShowNoticeForm(true)}>
                 <Plus size={16} />
@@ -583,24 +583,24 @@ const AnalyticsView = () => {
               <div className="modal-content liquid-glass-card slide-up">
                 <div className="modal-close-btn" onClick={() => setShowNoticeForm(false)}>✕</div>
                 <h3 style={{ fontSize: '20px', fontWeight: '800', marginBottom: '20px' }}>Publish Notice</h3>
-                
+
                 <form onSubmit={handleCreateNotice} className="onboarding-form">
                   <div className="form-group">
                     <label>NOTICE TITLE *</label>
-                    <input 
-                      type="text" 
-                      className="form-input" 
-                      placeholder="Installation Prep BOD Meeting" 
+                    <input
+                      type="text"
+                      className="form-input"
+                      placeholder="Installation Prep BOD Meeting"
                       value={noticeTitle}
                       onChange={(e) => setNoticeTitle(e.target.value)}
-                      required 
+                      required
                     />
                   </div>
 
                   <div className="form-group">
                     <label>CONTENT *</label>
-                    <textarea 
-                      className="form-input" 
+                    <textarea
+                      className="form-input"
                       style={{ minHeight: '120px' }}
                       placeholder="Write announcement content details..."
                       value={noticeContent}
@@ -610,9 +610,9 @@ const AnalyticsView = () => {
 
                   <div className="form-group">
                     <label>EFFECTIVE DATE</label>
-                    <input 
-                      type="date" 
-                      className="form-input" 
+                    <input
+                      type="date"
+                      className="form-input"
                       value={noticeDate}
                       onChange={(e) => setNoticeDate(e.target.value)}
                     />

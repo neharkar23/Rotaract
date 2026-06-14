@@ -40,6 +40,7 @@ export const AppProvider = ({ children }) => {
   const [payments, setPayments] = useState([]);
   const [myAttendance, setMyAttendance] = useState([]);
   const [attendance, setAttendance] = useState([]);
+  const [pendingAttendance, setPendingAttendance] = useState([]);
   const [users, setUsers] = useState([]);
   const [profiles, setProfiles] = useState([]);
   const [preApprovedList, setPreApprovedList] = useState([]);
@@ -87,6 +88,11 @@ export const AppProvider = ({ children }) => {
           
           const allAtt = await fetchAllAttendance();
           setAttendance(allAtt || []);
+
+          if (activeRole === 'ADMIN') {
+            const pendingAtt = await eventService.getPendingAttendanceRequests();
+            setPendingAttendance(pendingAtt || []);
+          }
         } else {
           const dues = await paymentService.getMemberDues();
           setPayments(dues ? [dues] : []);
@@ -145,9 +151,19 @@ export const AppProvider = ({ children }) => {
     triggerUpdate();
   };
 
-  const swapRole = (role) => {
-    setActiveRole(role);
-    triggerUpdate();
+  const swapRole = async (role) => {
+    try {
+      if (role === 'ADMIN') {
+        await login('admin@rotaract.org', 'password123');
+      } else if (role === 'TREASURER') {
+        await login('treasurer@rotaract.org', 'password123');
+      } else {
+        await login('member@rotaract.org', 'password123');
+      }
+      triggerUpdate();
+    } catch (err) {
+      alert('Failed to switch sandbox role. Make sure the database is seeded.');
+    }
   };
 
   const changeAccent = (color) => {
@@ -212,6 +228,7 @@ export const AppProvider = ({ children }) => {
       tasks,
       notices,
       attendance,
+      pendingAttendance,
       payments,
       users,
       profiles,

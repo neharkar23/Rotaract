@@ -83,6 +83,16 @@ export const eventService = {
   getAttendanceForEvent: async (eventId) => {
     const data = await apiClient.get(`/events/${eventId}/attendance`);
     return data.attendance;
+  },
+  applyForAttendance: async (eventId, profileId, proofImage) => {
+    return await apiClient.post(`/events/${eventId}/attendance/apply`, { profileId, proofImage });
+  },
+  getPendingAttendanceRequests: async () => {
+    const data = await apiClient.get('/events/attendance/pending');
+    return data.requests;
+  },
+  verifyAttendanceRequest: async (requestId, isApproved) => {
+    return await apiClient.post(`/events/attendance/verify/${requestId}`, { isApproved });
   }
 };
 

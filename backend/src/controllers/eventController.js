@@ -1,5 +1,8 @@
 import { supabase } from '../config/supabase.js';
 
+// In-memory store for pending attendance proofs since we cannot alter the supabase schema directly
+let pendingAttendanceRequests = [];
+
 export const getAllEvents = async (req, res, next) => {
   try {
     const { data: events, error } = await supabase
@@ -173,6 +176,103 @@ export const getAllAttendance = async (req, res, next) => {
 
     if (error) throw error;
     res.status(200).json({ attendance });
+  } catch (err) {
+    next(err);
+  }
+};
+
+export const applyForAttendance = async (req, res, next) => {
+  try {
+    const { eventId } = req.params;
+    const { profileId, proofImage } = req.body;
+
+    if (!profileId || !proofImage) {
+      return res.status(400).json({ error: 'Profile ID and proof image are required' });
+    }
+
+    // Check if already marked in DB
+    const { data: existing } = await supabase
+      .from('hr_attendance')
+      .select('id')
+      .match({ event_id: eventId, profile_id: profileId })
+      .single();
+    
+    if (existing) {
+      return res.status(400).json({ error: 'Attendance already verified.' });
+    }
+
+    const newRequest = {
+      id: `req_${Date.now()}_${Math.floor(Math.random()*1000)}`,
+      eventId,
+      profileId,
+      proofImage,
+      submittedAt: new Date().toISOString()
+    };
+
+    pendingAttendanceRequests.push(newRequest);
+
+    res.status(201).json({ message: 'Attendance verification request submitted', request: newRequest });
+  } catch (err) {
+    next(err);
+  }
+};
+
+export const getPendingAttendanceRequests = async (req, res, next) => {
+  try {
+    res.status(200).json({ requests: pendingAttendanceRequests });
+  } catch (err) {
+    next(err);
+  }
+};
+
+export const verifyAttendanceRequest = async (req, res, next) => {
+  try {
+    const { requestId } = req.params;
+    const { isApproved } = req.body;
+
+    const requestIndex = pendingAttendanceRequests.findIndex(r => r.id === requestId);
+    if (requestIndex === -1) {
+      return res.status(404).json({ error: 'Request not found' });
+    }
+
+    const request = pendingAttendanceRequests[requestIndex];
+
+    if (isApproved) {
+      const { data: attendance, error } = await supabase
+        .from('hr_attendance')
+        .insert({
+          event_id: request.eventId,
+          profile_id: request.profileId,
+          attended_by_admin_id: req.user.id
+        })
+        .select()
+        .single();
+
+      if (error && error.code !== '23505') {
+        throw error;
+      }
+
+      // Notification
+      const { data: ev } = await supabase.from('hr_events').select('title').eq('id', request.eventId).single();
+      await supabase.from('hr_notifications').insert({
+        profile_id: request.profileId,
+        title: 'Attendance Approved',
+        content: `Your attendance proof for "${ev?.title || 'Event'}" was approved by an admin.`
+      });
+    } else {
+      // Rejected
+      const { data: ev } = await supabase.from('hr_events').select('title').eq('id', request.eventId).single();
+      await supabase.from('hr_notifications').insert({
+        profile_id: request.profileId,
+        title: 'Attendance Rejected',
+        content: `Your attendance proof for "${ev?.title || 'Event'}" was rejected. Please contact an admin if you believe this is an error.`
+      });
+    }
+
+    // Remove from pending
+    pendingAttendanceRequests.splice(requestIndex, 1);
+
+    res.status(200).json({ message: `Attendance request ${isApproved ? 'approved' : 'rejected'}.` });
   } catch (err) {
     next(err);
   }
